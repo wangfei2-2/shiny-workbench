@@ -3,10 +3,67 @@
    数据存储：阶段一用 localStorage（单设备）。
    后续接入 Supabase 时，只需替换下方 store 的实现即可切换为云端同步。
    ========================================================= */
+/* ===== 云端同步（Supabase REST，带 localStorage 兜底） =====
+   不依赖任何 CDN SDK，直接用 fetch 调 PostgREST；断网/未建表时自动降级为本地存储。 */
+const SUPABASE_URL = 'https://ngdlmypsenotnqrrroefi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nZGxteXBzZW5vdG5xcnJvZWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzOTA2ODEsImV4cCI6MjEwMDk2NjY4MX0.QbbxFuGIjAYqSzOgO1l8-NL4JP5Yfeb-bWhtjItOg9I';
+
+let DB = {};            // 内存中的当前数据（所有模块的唯一真相来源）
+let useCloud = false;     // 是否成功连上 Supabase
+let ready = false;
+let bootPromise = null;
+
+function lsLoad(){ try { return JSON.parse(localStorage.getItem('sw_all')) || {}; } catch { return {}; } }
+function lsSave(){ try { localStorage.setItem('sw_all', JSON.stringify(DB)); } catch {} }
+function setSync(txt){ const el = document.querySelector('.sync-status span:last-child'); if(el) el.textContent = txt; }
+
+async function sbSelect(){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/sw_data?id=eq.1&select=payload`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  });
+  if(!r.ok) throw new Error('select '+r.status);
+  const arr = await r.json();
+  return arr[0] ? arr[0].payload : null;
+}
+async function sbUpsert(payload){
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/sw_data`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type':'application/json', Prefer:'resolution=merge-duplicates' },
+    body: JSON.stringify({ id:1, payload, updated_at: new Date().toISOString() })
+  });
+  if(!r.ok) throw new Error('upsert '+r.status);
+}
+
 const store = {
-  get: (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch { return def; } },
-  set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+  get: (k, def) => (k in DB) ? DB[k] : def,
+  set: (k, v) => { DB[k] = v; persist(); }
 };
+function persist(){
+  lsSave();                                   // 本地兜底：立即写
+  if(useCloud){
+    clearTimeout(persist._t);
+    persist._t = setTimeout(()=>{
+      sbUpsert(DB).then(()=>setSync('云同步 ✅')).catch(()=>setSync('同步失败·本地'));
+    }, 400);
+  }
+}
+const timeout = ms => new Promise(res => setTimeout(()=>res(undefined), ms));
+async function bootstrap(){
+  DB = lsLoad();          // 先用本地数据秒开界面
+  initApp();
+  loginBtn.disabled = true; loginBtn.textContent = '同步中…';
+  try {
+    const p = await Promise.race([ sbSelect(), timeout(5000) ]);
+    if(p === undefined){ useCloud = false; setSync('本地存储'); }
+    else {
+      useCloud = true;
+      if(p && Object.keys(p).length){ DB = p; initApp(); }   // 云端有数据则覆盖并重渲染
+      setSync('云同步 ✅');
+    }
+  } catch(e){ useCloud = false; setSync('本地存储'); }
+  ready = true; setupLoginMode(); loginBtn.disabled = false;
+}
+function ensureLoaded(){ if(!bootPromise) bootPromise = bootstrap(); return bootPromise; }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $ = id => document.getElementById(id);
 
@@ -35,19 +92,23 @@ const fmtFans = n => { n = Number(n)||0; return n>=1000 ? (n/1000).toFixed(1).re
    ========================================================= */
 const loginName = $('loginName'), loginPwd = $('loginPwd'), loginBtn = $('loginBtn'),
       loginHint = $('loginHint'), loginTip = $('loginTip'), loginErr = $('loginErr');
-const savedPwd = store.get('sw_pwd', null);
-loginName.value = store.get('sw_name', '运营小主');
-if(!savedPwd){
-  loginHint.textContent = '首次使用，设置你的访问密码';
-  loginTip.textContent = '只设置这一次，之后都用此密码进入';
-  loginBtn.textContent = '设置并进入 ✨';
-} else {
-  loginHint.textContent = '欢迎回来 ✨';
-  loginTip.textContent = '请输入访问密码';
-}
 function showLoginErr(m){ loginErr.textContent = m; loginErr.style.display = 'block'; }
-loginBtn.addEventListener('click', ()=>{
-  const v = loginPwd.value, nm = loginName.value.trim() || '运营小主';
+function setupLoginMode(){
+  const savedPwd = store.get('sw_pwd', null);
+  loginName.value = store.get('sw_name', '运营小主');
+  if(!savedPwd){
+    loginHint.textContent = '首次使用，设置你的访问密码';
+    loginTip.textContent = '只设置这一次，之后都用此密码进入';
+    loginBtn.textContent = '设置并进入 ✨';
+  } else {
+    loginHint.textContent = '欢迎回来 ✨';
+    loginTip.textContent = '请输入访问密码';
+    loginBtn.textContent = '进入工作台 ✨';
+  }
+}
+function doLogin(){
+  const v = loginPwd.value.trim(), nm = loginName.value.trim() || '运营小主';
+  const savedPwd = store.get('sw_pwd', null);
   if(!savedPwd){
     if(v.length < 4){ showLoginErr('密码至少 4 位哦'); return; }
     store.set('sw_pwd', v); store.set('sw_name', nm);
@@ -58,8 +119,9 @@ loginBtn.addEventListener('click', ()=>{
   $('login').classList.add('hidden');
   $('sideName').textContent = nm;
   loadWelcome();
-});
-loginPwd.addEventListener('keydown', e=>{ if(e.key==='Enter') loginBtn.click(); });
+}
+loginBtn.addEventListener('click', ()=> ensureLoaded().then(doLogin));
+loginPwd.addEventListener('keydown', e=>{ if(e.key==='Enter') ensureLoaded().then(doLogin); });
 $('logoutBtn').addEventListener('click', ()=>{ $('login').classList.remove('hidden'); loginPwd.value=''; loginErr.style.display='none'; });
 
 /* =========================================================
@@ -532,8 +594,13 @@ function renderHome(){
 }
 
 /* =========================================================
-   初始化
+   初始化（数据加载完成后执行）
    ========================================================= */
-seedIfEmpty();
-renderTasks(); renderAccounts(); renderKanban(); renderIdeas(); renderFit(); renderRead(); renderSkill();
-renderHome(); renderDailyAuto(); renderWeeklyAuto(); loadDaily(); loadWeekly();
+function initApp(){
+  tasks = store.get('sw_tasks', []);   // 从已加载的数据恢复任务列表
+  seedIfEmpty();
+  setupLoginMode();
+  renderTasks(); renderAccounts(); renderKanban(); renderIdeas(); renderFit(); renderRead(); renderSkill();
+  renderHome(); renderDailyAuto(); renderWeeklyAuto(); loadDaily(); loadWeekly();
+}
+ensureLoaded();
