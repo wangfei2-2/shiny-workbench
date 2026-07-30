@@ -87,14 +87,9 @@
       </div>
 
       <div class="card span2">
-        <div class="card-title">✅ 今日计划 <span class="tag done" id="homeTodo">2/4</span></div>
-        <ul class="todo" id="homeTodoList">
-          <li><label><input type="checkbox" checked><span>09:00 写宠物号文案</span></label></li>
-          <li><label><input type="checkbox" checked><span>11:00 拍摄口播视频</span></label></li>
-          <li><label><input type="checkbox"><span>14:00 剪辑工作VLOG</span></label></li>
-          <li><label><input type="checkbox"><span>18:30 发布小红书宠物号</span></label></li>
-        </ul>
-        <div class="muted small">⭐ 今日必做：发布小红书 · 剪辑VLOG · 口播拍摄</div>
+        <div class="card-title">✅ 今日计划 <span class="tag done" id="homeTodo">0</span></div>
+        <ul class="todo" id="homeTasks"></ul>
+        <div class="muted small">点「每日计划」可新增 / 编辑 / 删除任务</div>
       </div>
 
       <div class="card">
@@ -115,10 +110,10 @@
       <div class="card span3">
         <div class="card-title">⚡ 快速记录</div>
         <div class="quick-btns">
-          <button class="qbtn" style="--qc:var(--blue)">📝 新建任务</button>
-          <button class="qbtn" style="--qc:var(--pink)">💡 记录灵感</button>
-          <button class="qbtn" style="--qc:var(--mint)">🍱 记录饮食</button>
-          <button class="qbtn" style="--qc:var(--purple)">📖 记录阅读</button>
+          <button class="qbtn" style="--qc:var(--blue)" data-target="plan">📝 新建任务</button>
+          <button class="qbtn" style="--qc:var(--pink)" data-target="idea">💡 记录灵感</button>
+          <button class="qbtn" style="--qc:var(--mint)" data-target="fit">🍱 记录饮食</button>
+          <button class="qbtn" style="--qc:var(--purple)" data-target="read">📖 记录阅读</button>
         </div>
       </div>
 
@@ -139,32 +134,67 @@
   <!-- 每日计划 -->
   <section class="panel" id="plan">
     <div class="grid">
+      <!-- 新增任务 -->
       <div class="card span3">
-        <div class="card-title">📋 今日任务 <span class="tag">5 项</span></div>
-        <div class="legend"><span class="lg" style="--c:var(--blue)">工作</span><span class="lg" style="--c:var(--pink)">自媒体</span><span class="lg" style="--c:var(--yellow)">生活</span><span class="lg" style="--c:var(--mint)">健身</span><span class="lg" style="--c:var(--purple)">阅读</span></div>
+        <div class="card-title">📝 添加今日计划</div>
+        <div class="add-task">
+          <input id="taskText" class="at-text" placeholder="今天要做什么？" />
+          <input id="taskTime" type="time" class="at-time" />
+          <select id="taskCat" class="at-cat">
+            <option value="work">工作</option>
+            <option value="media" selected>自媒体</option>
+            <option value="life">生活</option>
+            <option value="fit">健身</option>
+            <option value="read">阅读</option>
+          </select>
+          <button class="btn primary" id="taskAdd">添加</button>
+        </div>
       </div>
+
+      <!-- 任务列表 -->
       <div class="card span2">
-        <div class="card-title">🕒 时间轴</div>
-        <ul class="timeline">
-          <li><i>09:00</i> 写宠物号文案</li>
-          <li><i>11:00</i> 拍摄口播视频</li>
-          <li><i>14:00</i> 剪辑工作VLOG</li>
-          <li><i>18:30</i> 发布小红书</li>
-          <li><i>20:00</i> 运动 45 分钟</li>
-          <li><i>21:30</i> 阅读 30 分钟</li>
-        </ul>
+        <div class="card-title">✅ 今日任务 <span class="tag done" id="taskCount">0</span></div>
+        <ul class="todo editable" id="tasksList"></ul>
+        <div class="muted small" id="tasksEmpty">还没有任务，上面添加一条吧～</div>
       </div>
+
+      <!-- 时间轴视图 -->
       <div class="card">
-        <div class="card-title">⭐ 今日必做</div>
-        <ul class="todo">
-          <li><label><input type="checkbox"><span>发布小红书宠物号</span></label></li>
-          <li><label><input type="checkbox"><span>剪辑工作VLOG</span></label></li>
-          <li><label><input type="checkbox"><span>口播视频拍摄</span></label></li>
-        </ul>
+        <div class="card-title">🕒 时间轴</div>
+        <ul class="timeline" id="timelineView"></ul>
       </div>
+
+      <!-- 日复盘 -->
       <div class="card span3">
-        <div class="card-title">🌙 今日复盘</div>
-        <div class="muted small">完成了什么 / 没完成什么 / 最开心的事 / 明天最重要的事 / 今日心情 😊</div>
+        <div class="card-title">🌙 今日复盘 <span class="tag" id="reviewDate"></span></div>
+        <div class="form-grid">
+          <label>✅ 今天完成了什么<textarea id="rvDone" rows="2" placeholder="..."></textarea></label>
+          <label>❌ 哪件事没完成<textarea id="rvNot" rows="2" placeholder="..."></textarea></label>
+          <label>🌟 今天最开心的事<textarea id="rvHappy" rows="2" placeholder="..."></textarea></label>
+          <label>🎯 明天最重要的事<textarea id="rvTomorrow" rows="2" placeholder="..."></textarea></label>
+          <label>😊 今日心情
+            <div class="mood" id="rvMood">
+              <button type="button" data-m="😊">😊</button><button type="button" data-m="😐">😐</button><button type="button" data-m="😢">😢</button><button type="button" data-m="😡">😡</button><button type="button" data-m="🥰">🥰</button>
+            </div>
+          </label>
+        </div>
+        <button class="btn primary" id="rvSave">保存今日复盘</button>
+        <div class="muted small" id="rvHistory"></div>
+      </div>
+
+      <!-- 周复盘 -->
+      <div class="card span3">
+        <div class="card-title">🗓️ 本周复盘 <span class="tag" id="weekLabel"></span></div>
+        <div class="form-grid">
+          <label>🎯 本周目标达成<textarea id="wkGoal" rows="2" placeholder="..."></textarea></label>
+          <label>📱 六个账号数据小结<textarea id="wkAcc" rows="2" placeholder="..."></textarea></label>
+          <label>👍 做得好的<textarea id="wkGood" rows="2" placeholder="..."></textarea></label>
+          <label>🔧 待改进<textarea id="wkImprove" rows="2" placeholder="..."></textarea></label>
+          <label>🚀 下周重点<textarea id="wkNext" rows="2" placeholder="..."></textarea></label>
+          <label>💡 本周状态<textarea id="wkState" rows="2" placeholder="..."></textarea></label>
+        </div>
+        <button class="btn primary" id="wkSave">保存本周复盘</button>
+        <div class="muted small" id="wkHistory"></div>
       </div>
     </div>
   </section>
