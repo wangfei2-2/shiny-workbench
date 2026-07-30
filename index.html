@@ -9,16 +9,17 @@
 </head>
 <body>
 
-<!-- 登录 -->
+<!-- 登录：一次性固定密码 -->
 <div class="login" id="login">
   <div class="login-card">
     <div class="login-logo">🪴</div>
     <h1>我的闪闪工作台</h1>
-    <p>只属于你的个人管理空间</p>
-    <input id="loginName" placeholder="昵称" value="运营小主" />
-    <input id="loginPwd" type="password" placeholder="访问密码" value="123456" />
+    <p id="loginHint">只属于你的个人管理空间</p>
+    <input id="loginName" placeholder="你的昵称" value="运营小主" />
+    <input id="loginPwd" type="password" placeholder="访问密码" />
     <button class="btn primary block" id="loginBtn">进入工作台 ✨</button>
-    <small>演示密码：123456</small>
+    <small id="loginTip">首次使用请设置密码（只设置这一次）</small>
+    <small id="loginErr" class="err" style="display:none"></small>
   </div>
 </div>
 
@@ -36,7 +37,7 @@
   </div>
   <div class="profile">
     <div class="avatar">🐱</div>
-    <div class="profile-info"><strong>运营小主</strong><span>今天也要闪闪发光 ✨</span></div>
+    <div class="profile-info"><strong id="sideName">运营小主</strong><span>今天也要闪闪发光 ✨</span></div>
   </div>
   <nav class="nav">
     <button class="nav-item active" data-target="home"><span class="nav-ico">🏠</span><span class="nav-txt">今日概览</span></button>
@@ -48,8 +49,8 @@
     <button class="nav-item" data-target="skill"><span class="nav-ico">🎯</span><span class="nav-txt">新技能学习</span></button>
   </nav>
   <div class="side-foot">
-    <div class="sync-status"><span class="dot"></span><span class="nav-txt">云同步正常</span></div>
-    <button class="nav-item setting"><span class="nav-ico">⚙️</span><span class="nav-txt">设置</span></button>
+    <div class="sync-status"><span class="dot"></span><span class="nav-txt">本地存储</span></div>
+    <button class="nav-item setting" id="logoutBtn"><span class="nav-ico">🚪</span><span class="nav-txt">退出登录</span></button>
   </div>
 </aside>
 
@@ -70,20 +71,14 @@
       <div class="card span3 welcome">
         <div class="welcome-avatar">🐱</div>
         <div>
-          <div class="big">早上好呀，运营小主！</div>
-          <div class="muted">7月29日 周二 · 苏州 ⛅26° · 今天也要完成闪闪发光的小目标 ✨</div>
+          <div class="big" id="welcomeText">早上好呀！</div>
+          <div class="muted" id="welcomeSub"></div>
         </div>
       </div>
 
       <div class="card span3">
         <div class="card-title">🌈 今日完成度</div>
-        <div class="rings big-rings">
-          <div class="ring" style="--p:57;--c:var(--blue)"><span>计划</span><b>4/7</b></div>
-          <div class="ring" style="--p:67;--c:var(--purple)"><span>阅读</span><b>20′</b></div>
-          <div class="ring" style="--p:78;--c:var(--mint)"><span>运动</span><b>35′</b></div>
-          <div class="ring" style="--p:50;--c:var(--orange)"><span>学习</span><b>1/2</b></div>
-          <div class="ring" style="--p:75;--c:var(--pink)"><span>饮水</span><b>6杯</b></div>
-        </div>
+        <div class="rings big-rings" id="homeRings"></div>
       </div>
 
       <div class="card span2">
@@ -94,17 +89,13 @@
 
       <div class="card">
         <div class="card-title">🔥 连续打卡</div>
-        <div class="streak">28<span>天</span></div>
-        <div class="muted small">🏅 运动 7天 · 📖 阅读 16天</div>
+        <div class="streak" id="homeStreak">0<span>天</span></div>
+        <div class="muted small" id="homeStreakSub"></div>
       </div>
 
       <div class="card span3">
         <div class="card-title">📣 账号发布提醒</div>
-        <div class="remind">
-          <div class="remind-row"><span class="badge xhs">小红书</span>宠物号 · 今天 18:30 发布</div>
-          <div class="remind-row"><span class="badge xhs">小红书</span>个人口播号 · 脚本待修改</div>
-          <div class="remind-row"><span class="badge dy">抖音</span>工作VLOG · 素材待整理</div>
-        </div>
+        <div class="remind" id="homeRemind"></div>
       </div>
 
       <div class="card span3">
@@ -112,7 +103,7 @@
         <div class="quick-btns">
           <button class="qbtn" style="--qc:var(--blue)" data-target="plan">📝 新建任务</button>
           <button class="qbtn" style="--qc:var(--pink)" data-target="idea">💡 记录灵感</button>
-          <button class="qbtn" style="--qc:var(--mint)" data-target="fit">🍱 记录饮食</button>
+          <button class="qbtn" style="--qc:var(--mint)" data-target="fit">🍱 记录体重</button>
           <button class="qbtn" style="--qc:var(--purple)" data-target="read">📖 记录阅读</button>
         </div>
       </div>
@@ -134,7 +125,6 @@
   <!-- 每日计划 -->
   <section class="panel" id="plan">
     <div class="grid">
-      <!-- 新增任务 -->
       <div class="card span3">
         <div class="card-title">📝 添加今日计划</div>
         <div class="add-task">
@@ -151,27 +141,24 @@
         </div>
       </div>
 
-      <!-- 任务列表 -->
       <div class="card span2">
         <div class="card-title">✅ 今日任务 <span class="tag done" id="taskCount">0</span></div>
         <ul class="todo editable" id="tasksList"></ul>
         <div class="muted small" id="tasksEmpty">还没有任务，上面添加一条吧～</div>
       </div>
 
-      <!-- 时间轴视图 -->
       <div class="card">
         <div class="card-title">🕒 时间轴</div>
         <ul class="timeline" id="timelineView"></ul>
       </div>
 
-      <!-- 日复盘 -->
+      <!-- 日复盘：自动生成 + 主观补充 -->
       <div class="card span3">
         <div class="card-title">🌙 今日复盘 <span class="tag" id="reviewDate"></span></div>
+        <div class="auto-box" id="dailyAuto"></div>
         <div class="form-grid">
-          <label>✅ 今天完成了什么<textarea id="rvDone" rows="2" placeholder="..."></textarea></label>
-          <label>❌ 哪件事没完成<textarea id="rvNot" rows="2" placeholder="..."></textarea></label>
-          <label>🌟 今天最开心的事<textarea id="rvHappy" rows="2" placeholder="..."></textarea></label>
-          <label>🎯 明天最重要的事<textarea id="rvTomorrow" rows="2" placeholder="..."></textarea></label>
+          <label>🌟 今天最开心的事<textarea id="rvHappy" rows="2" placeholder="自动复盘之外，写点心情～"></textarea></label>
+          <label>🎯 明天最重要的事<textarea id="rvTomorrow" rows="2" placeholder="给明天的自己一句话"></textarea></label>
           <label>😊 今日心情
             <div class="mood" id="rvMood">
               <button type="button" data-m="😊">😊</button><button type="button" data-m="😐">😐</button><button type="button" data-m="😢">😢</button><button type="button" data-m="😡">😡</button><button type="button" data-m="🥰">🥰</button>
@@ -182,16 +169,16 @@
         <div class="muted small" id="rvHistory"></div>
       </div>
 
-      <!-- 周复盘 -->
+      <!-- 周复盘：自动生成 + 主观补充 -->
       <div class="card span3">
         <div class="card-title">🗓️ 本周复盘 <span class="tag" id="weekLabel"></span></div>
+        <div class="auto-box" id="weeklyAuto"></div>
         <div class="form-grid">
-          <label>🎯 本周目标达成<textarea id="wkGoal" rows="2" placeholder="..."></textarea></label>
-          <label>📱 六个账号数据小结<textarea id="wkAcc" rows="2" placeholder="..."></textarea></label>
-          <label>👍 做得好的<textarea id="wkGood" rows="2" placeholder="..."></textarea></label>
-          <label>🔧 待改进<textarea id="wkImprove" rows="2" placeholder="..."></textarea></label>
-          <label>🚀 下周重点<textarea id="wkNext" rows="2" placeholder="..."></textarea></label>
-          <label>💡 本周状态<textarea id="wkState" rows="2" placeholder="..."></textarea></label>
+          <label>🎯 本周目标达成<textarea id="wkGoal" rows="2" placeholder=""></textarea></label>
+          <label>👍 做得好的<textarea id="wkGood" rows="2" placeholder=""></textarea></label>
+          <label>🔧 待改进<textarea id="wkImprove" rows="2" placeholder=""></textarea></label>
+          <label>🚀 下周重点<textarea id="wkNext" rows="2" placeholder=""></textarea></label>
+          <label>💡 本周状态<textarea id="wkState" rows="2" placeholder=""></textarea></label>
         </div>
         <button class="btn primary" id="wkSave">保存本周复盘</button>
         <div class="muted small" id="wkHistory"></div>
@@ -202,26 +189,21 @@
   <!-- 我的账号 -->
   <section class="panel" id="accounts">
     <div class="grid">
-      <div class="card span3"><div class="card-title">📱 账号总览 <span class="tag">6 个账号</span></div></div>
-      <div class="card acct" style="--ac:var(--yellow)"><div class="acct-top"><span class="badge xhs">小红书</span><span class="acct-emoji">🐾</span></div><div class="acct-name">宠物号</div><div class="acct-fans">12.8k<small>粉</small></div><div class="acct-meta">月增 +1.2k · 发 21 · 待发 2</div></div>
-      <div class="card acct" style="--ac:var(--pink)"><div class="acct-top"><span class="badge xhs">小红书</span><span class="acct-emoji">🎬</span></div><div class="acct-name">个人工作vlog</div><div class="acct-fans">8.2k<small>粉</small></div><div class="acct-meta">月增 +680 · 发 13 · 待发 1</div></div>
-      <div class="card acct" style="--ac:var(--orange)"><div class="acct-top"><span class="badge xhs">小红书</span><span class="acct-emoji">🛍️</span></div><div class="acct-name">卖货账号</div><div class="acct-fans">23.5k<small>粉</small></div><div class="acct-meta">月增 +2.1k · 发 28 · 待发 3</div></div>
-      <div class="card acct" style="--ac:var(--purple)"><div class="acct-top"><span class="badge xhs">小红书</span><span class="acct-emoji">🎙️</span></div><div class="acct-name">个人口播号</div><div class="acct-fans">5.6k<small>粉</small></div><div class="acct-meta">月增 +420 · 发 16 · 待发 2</div></div>
-      <div class="card acct" style="--ac:var(--blue)"><div class="acct-top"><span class="badge dy">抖音</span><span class="acct-emoji">🐾</span></div><div class="acct-name">宠物号</div><div class="acct-fans">41.2k<small>粉</small></div><div class="acct-meta">月增 +4.8k · 发 24 · 待发 2</div></div>
-      <div class="card acct" style="--ac:var(--mint)"><div class="acct-top"><span class="badge dy">抖音</span><span class="acct-emoji">📹</span></div><div class="acct-name">工作VLOG记录</div><div class="acct-fans">15.9k<small>粉</small></div><div class="acct-meta">月增 +1.9k · 发 20 · 待发 1</div></div>
-      <div class="card span3 acct-detail">
-        <div class="card-title">🔍 小红书 · 宠物号 详情 <span class="tag">看板可拖动</span></div>
-        <div class="kanban">
-          <div class="kb-col"><div class="kb-h" style="--kc:var(--yellow)">💡 灵感池</div><div class="kb-card">猫砂测评</div><div class="kb-card">夏日饮水</div></div>
-          <div class="kb-col"><div class="kb-h" style="--kc:var(--blue)">✍️ 待写脚本</div><div class="kb-card">猫主子早餐</div></div>
-          <div class="kb-col"><div class="kb-h" style="--kc:var(--pink)">🎥 待拍摄</div><div class="kb-card">窗台晒太阳</div></div>
-          <div class="kb-col"><div class="kb-h" style="--kc:var(--orange)">✂️ 待剪辑</div></div>
-          <div class="kb-col"><div class="kb-h" style="--kc:var(--purple)">📤 待发布</div><div class="kb-card">18:30 早餐vlog</div></div>
-          <div class="kb-col"><div class="kb-h" style="--kc:var(--mint)">✅ 已发布</div><div class="kb-card">昨天·逗猫玩具</div></div>
+      <div class="card span3">
+        <div class="card-title">📱 账号总览 <span class="tag" id="acctCount">0</span>
+          <button class="mini-btn" id="acctAdd">＋ 添加账号</button>
         </div>
       </div>
-      <div class="card span2"><div class="card-title">📊 互动率趋势</div><svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none"><polyline class="grid-line" points="0,40 320,40"/><polyline class="line" points="10,70 70,50 130,60 190,38 250,46 310,30"/><circle class="dot" cx="10" cy="70" r="3"/><circle class="dot" cx="70" cy="50" r="3"/><circle class="dot" cx="130" cy="60" r="3"/><circle class="dot" cx="190" cy="38" r="3"/><circle class="dot" cx="250" cy="46" r="3"/><circle class="dot" cx="310" cy="30" r="3"/></svg></div>
-      <div class="card"><div class="card-title">🏆 爆款复盘</div><div class="muted small">封面：猫脸特写；标题：数字+痛点；前三秒：直接上才艺</div></div>
+      <div id="acctList" class="grid" style="grid-column:span 3"></div>
+
+      <div class="card span3 acct-detail">
+        <div class="card-title">🔍 内容流水线看板 <span class="tag">卡片可增删</span></div>
+        <div class="kanban" id="kanban"></div>
+      </div>
+      <div class="card span2"><div class="card-title">📊 互动率趋势</div>
+        <svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none"><polyline class="grid-line" points="0,40 320,40"/><polyline class="line" points="10,70 70,50 130,60 190,38 250,46 310,30"/><circle class="dot" cx="10" cy="70" r="3"/><circle class="dot" cx="70" cy="50" r="3"/><circle class="dot" cx="130" cy="60" r="3"/><circle class="dot" cx="190" cy="38" r="3"/><circle class="dot" cx="250" cy="46" r="3"/><circle class="dot" cx="310" cy="30" r="3"/></svg>
+      </div>
+      <div class="card"><div class="card-title">🏆 爆款复盘</div><textarea class="block-edit" id="hitNote" rows="4" placeholder="记录你的爆款方法论…"></textarea></div>
     </div>
   </section>
 
@@ -230,42 +212,75 @@
     <div class="grid">
       <div class="card span3">
         <div class="card-title">⚡ 快速输入</div>
-        <div class="quick-input"><input id="ideaInput" placeholder="突然想到一个好点子…（回车保存）" /><button class="btn primary" id="ideaAdd">保存</button></div>
-        <div class="chips"><span class="chip">#宠物选题</span><span class="chip">#工作VLOG</span><span class="chip">#卖货内容</span><span class="chip">#个人口播</span><span class="chip">#生活记录</span></div>
+        <div class="quick-input">
+          <input id="ideaInput" placeholder="突然想到一个好点子…（回车保存）" />
+          <select id="ideaTag" class="at-cat">
+            <option>宠物选题</option><option>工作VLOG</option><option>卖货内容</option><option>个人口播</option><option>生活记录</option>
+          </select>
+          <button class="btn primary" id="ideaAdd">保存</button>
+        </div>
       </div>
-      <div class="card idea-card" style="--ic:var(--yellow)"><span class="idea-tag">宠物选题</span><div>「猫主子的一天」系列 vlog，第一视角拍吃喝睡</div><div class="idea-foot">🕒 今天 10:12 · 状态：值得尝试</div></div>
-      <div class="card idea-card" style="--ic:var(--pink)"><span class="idea-tag">卖货内容</span><div>开场白：「别急着划走，这件我自用了 3 个月」</div><div class="idea-foot">🕒 昨天 21:40 · 状态：已加入计划</div></div>
-      <div class="card idea-card" style="--ic:var(--blue)"><span class="idea-tag">工作VLOG</span><div>手机云台 + 自然光，比补光灯更真实</div><div class="idea-foot">🕒 昨天 15:03 · 状态：已完成</div></div>
-      <div class="card idea-card" style="--ic:var(--purple)"><span class="idea-tag">个人口播</span><div>标题公式：数字+痛点+反转</div><div class="idea-foot">🕒 前天 09:20 · 状态：值得尝试</div></div>
+      <div id="ideaList" class="grid" style="grid-column:span 3"></div>
     </div>
   </section>
 
   <!-- 减肥记录 -->
   <section class="panel" id="fit">
     <div class="grid">
-      <div class="card"><div class="card-title">⚖️ 当前体重</div><div class="big" id="fitBig">56.8<small>kg</small></div><div class="muted down">▼ 已减 1.2kg</div><div class="quick-input mt"><input id="weightInput" placeholder="记录新体重" /><button class="btn primary" id="weightAdd">记</button></div></div>
-      <div class="card"><div class="card-title">🎯 距目标</div><div class="ring big-ring" style="--p:72;--c:var(--mint)"><span>目标</span><b>72%</b></div><div class="muted small">目标 54kg · 坚持 28 天</div></div>
-      <div class="card span2"><div class="card-title">📈 体重趋势</div><svg class="chart" viewBox="0 0 320 120" preserveAspectRatio="none"><polyline class="grid-line" points="0,30 320,30"/><polyline class="grid-line" points="0,70 320,70"/><polyline class="line" points="10,40 60,52 110,46 160,58 210,50 260,64 310,56"/><circle class="dot" cx="10" cy="40" r="3"/><circle class="dot" cx="60" cy="52" r="3"/><circle class="dot" cx="110" cy="46" r="3"/><circle class="dot" cx="160" cy="58" r="3"/><circle class="dot" cx="210" cy="50" r="3"/><circle class="dot" cx="260" cy="64" r="3"/><circle class="dot" cx="310" cy="56" r="3"/></svg></div>
-      <div class="card span3"><div class="card-title">🌸 非体重成就</div><div class="muted">· 裤子变宽松了 👖 · 连续运动 7 天 💪 · 爬楼不喘了 🏃 · 睡眠变好了 😴</div></div>
+      <div class="card">
+        <div class="card-title">⚖️ 当前体重</div>
+        <div class="big" id="fitBig">--<small>kg</small></div>
+        <div class="muted down" id="fitDelta"></div>
+        <div class="quick-input mt"><input id="weightInput" type="number" step="0.1" placeholder="记录新体重" /><button class="btn primary" id="weightAdd">记</button></div>
+        <div class="log-list" id="weightLog"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 目标 / 起点</div>
+        <label class="field">目标体重 <input id="fitGoal" class="inline-num" type="number" step="0.1" /></label>
+        <label class="field">起始体重 <input id="fitStart" class="inline-num" type="number" step="0.1" /></label>
+        <div class="ring big-ring" id="fitRing" style="--p:0;--c:var(--mint)"><span>目标</span><b>0%</b></div>
+      </div>
+      <div class="card span2"><div class="card-title">📈 体重趋势</div><svg class="chart" id="fitChart" viewBox="0 0 320 120" preserveAspectRatio="none"><polyline class="grid-line" points="0,30 320,30"/><polyline class="grid-line" points="0,70 320,70"/></svg></div>
+      <div class="card span3">
+        <div class="card-title">🌸 非体重成就 <button class="mini-btn" id="achAdd">＋ 添加</button></div>
+        <div id="achList" class="tags-edit"></div>
+      </div>
     </div>
   </section>
 
   <!-- 每日阅读 -->
   <section class="panel" id="read">
     <div class="grid">
-      <div class="card"><div class="card-title">⏱️ 今日阅读</div><div class="big">32<small>分</small></div><div class="ring small-ring" style="--p:64;--c:var(--purple)"><span>进度</span><b>64%</b></div></div>
-      <div class="card"><div class="card-title">🔥 连续</div><div class="big">16<small>天</small></div><div class="muted small">本月 25 天目标</div></div>
-      <div class="card span2"><div class="card-title">📚 正在阅读</div><div class="book" style="--bc:var(--pink)">增长黑客<small>78%</small></div><div class="muted small">今日金句：「不要用战术勤奋掩盖战略懒惰。」</div></div>
+      <div class="card">
+        <div class="card-title">⏱️ 今日阅读</div>
+        <div class="big" id="readBig">0<small>分</small></div>
+        <div class="quick-input mt"><input id="readToday" type="number" placeholder="今天读了几分钟" /><button class="btn primary" id="readAdd">记</button></div>
+        <div class="ring small-ring" id="readRing" style="--p:0;--c:var(--purple)"><span>进度</span><b>0%</b></div>
+        <label class="field">每日目标(分) <input id="readGoal" class="inline-num" type="number" /></label>
+      </div>
+      <div class="card">
+        <div class="card-title">🔥 连续阅读</div>
+        <div class="big" id="readStreak">0<small>天</small></div>
+        <div class="muted small">本月目标 25 天</div>
+      </div>
+      <div class="card span2">
+        <div class="card-title">📚 书架 <button class="mini-btn" id="bookAdd">＋ 加书</button></div>
+        <div id="bookList" class="book-list"></div>
+      </div>
     </div>
   </section>
 
   <!-- 新技能学习 -->
   <section class="panel" id="skill">
     <div class="grid">
-      <div class="card span3"><div class="card-title">🎯 进行中的技能</div>
-        <div class="skill"><div class="skill-row"><span>🎬 剪映进阶剪辑</span><b>65%</b></div><div class="progress"><i style="width:65%;--pc:var(--orange)"></i></div><div class="skill-row"><span>📊 数据分析</span><b>30%</b></div><div class="progress"><i style="width:30%;--pc:var(--blue)"></i></div><div class="skill-row"><span>✍️ 文案写作</span><b>88%</b></div><div class="progress"><i style="width:88%;--pc:var(--pink)"></i></div></div>
+      <div class="card span3">
+        <div class="card-title">🎯 进行中的技能 <button class="mini-btn" id="skillAdd">＋ 加技能</button></div>
+        <div id="skillList" class="skill"></div>
       </div>
-      <div class="card span3"><div class="card-title">📅 今日学习任务</div><div class="muted small">· 看一节课程 · 做一次练习 · 整理笔记 · 完成一个作品</div></div>
+      <div class="card span3">
+        <div class="card-title">📅 今日学习任务 <button class="mini-btn" id="skillTaskAdd">＋ 添加</button></div>
+        <div id="skillTaskList" class="tags-edit"></div>
+      </div>
     </div>
   </section>
 </main>
