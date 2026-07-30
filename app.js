@@ -5,7 +5,7 @@
    ========================================================= */
 /* ===== 云端同步（Supabase REST，带 localStorage 兜底） =====
    不依赖任何 CDN SDK，直接用 fetch 调 PostgREST；断网/未建表时自动降级为本地存储。 */
-const SUPABASE_URL = 'https://ngdlmypsenotnqrrroefi.supabase.co';
+const SUPABASE_URL = 'https://ngdlmypsenotnqrroefi.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nZGxteXBzZW5vdG5xcnJvZWZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzOTA2ODEsImV4cCI6MjEwMDk2NjY4MX0.QbbxFuGIjAYqSzOgO1l8-NL4JP5Yfeb-bWhtjItOg9I';
 
 let DB = {};            // 内存中的当前数据（所有模块的唯一真相来源）
