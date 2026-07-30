@@ -53,14 +53,14 @@ async function bootstrap(){
   initApp();
   loginBtn.disabled = true; loginBtn.textContent = '同步中…';
   try {
-    const p = await Promise.race([ sbSelect(), timeout(5000) ]);
-    if(p === undefined){ useCloud = false; setSync('本地存储'); }
+    const p = await Promise.race([ sbSelect(), timeout(12000) ]);
+    if(p === undefined){ useCloud = false; setSync('同步超时·本地'); }
     else {
       useCloud = true;
       if(p && Object.keys(p).length){ DB = p; initApp(); }   // 云端有数据则覆盖并重渲染
       setSync('云同步 ✅');
     }
-  } catch(e){ useCloud = false; setSync('本地存储'); }
+  } catch(e){ useCloud = false; setSync('同步失败·本地'); console.warn('[sync error]', e); }
   ready = true; setupLoginMode(); loginBtn.disabled = false;
 }
 function ensureLoaded(){ if(!bootPromise) bootPromise = bootstrap(); return bootPromise; }
